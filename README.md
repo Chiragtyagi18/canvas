@@ -27,3 +27,20 @@ A visual canvas built with **Next.js**, **React DnD**, and **Tailwind CSS**, whe
 
 ---
 
+## 📦 Installation
+
+ **Clone the Repository**
+   ```bash
+   git clone https://github.com/Chiragtyagi18/canvas.git
+   cd canvas
+
+canvas/
+├── app/
+│   └── page.tsx         # Main UI logic and drag-drop canvas
+├── public/              # Public assets (if any)
+├── styles/
+│   └── globals.css      # Tailwind base styles
+├── README.md
+├── package.json
+└── next.config.js
+
