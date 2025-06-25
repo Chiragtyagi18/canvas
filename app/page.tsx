@@ -14,8 +14,10 @@ const BLOCKS: Block[] = [
   { id: "blockB", label: "Block B" },
 ];
 
+// Draggable block in toolbox
 const DraggableBlock = ({ block }: { block: Block }) => {
-  const [{ isDragging }, dragRef] = useDrag(() => ({
+  const ref = useRef<HTMLDivElement | null>(null);
+  const [{ isDragging }, drag] = useDrag(() => ({
     type: "block",
     item: block,
     collect: (monitor) => ({
@@ -23,9 +25,15 @@ const DraggableBlock = ({ block }: { block: Block }) => {
     }),
   }));
 
+  useEffect(() => {
+    if (ref.current) {
+      drag(ref.current);
+    }
+  }, [drag]);
+
   return (
     <div
-      ref={dragRef}
+      ref={ref}
       className={`p-2 m-2 bg-blue-200 rounded cursor-move ${
         isDragging ? "opacity-50" : ""
       }`}
@@ -35,26 +43,27 @@ const DraggableBlock = ({ block }: { block: Block }) => {
   );
 };
 
+
+// Block displayed on canvas
 const CanvasBlock = ({
   block,
   onContextMenu,
 }: {
   block: Block;
   onContextMenu: (x: number, y: number) => void;
-}) => {
-  return (
-    <div
-      onContextMenu={(e) => {
-        e.preventDefault();
-        onContextMenu(e.clientX, e.clientY);
-      }}
-      className="p-2 m-2 bg-green-300 rounded cursor-pointer"
-    >
-      {block.label}
-    </div>
-  );
-};
+}) => (
+  <div
+    onContextMenu={(e) => {
+      e.preventDefault();
+      onContextMenu(e.clientX, e.clientY);
+    }}
+    className="p-2 m-2 bg-green-300 rounded cursor-pointer"
+  >
+    {block.label}
+  </div>
+);
 
+// Custom context menu
 const ContextMenu = ({
   visible,
   x,
@@ -75,6 +84,7 @@ const ContextMenu = ({
   );
 };
 
+// Drop area (canvas)
 const Canvas = ({
   blocks,
   onDropBlock,
@@ -84,20 +94,22 @@ const Canvas = ({
   onDropBlock: (block: Block) => void;
   onContextMenu: (x: number, y: number) => void;
 }) => {
+  const ref = useRef<HTMLDivElement | null>(null);
+
   const [, drop] = useDrop(() => ({
     accept: "block",
     drop: (item: Block) => onDropBlock(item),
   }));
 
-  const containerRef = useRef<HTMLDivElement>(null);
-
   useEffect(() => {
-    if (containerRef.current) drop(containerRef);
+    if (ref.current) {
+      drop(ref.current);
+    }
   }, [drop]);
 
   return (
     <div
-      ref={containerRef}
+      ref={ref}
       className="flex-1 min-h-[400px] bg-white border border-dashed border-gray-500 p-4 relative rounded"
     >
       <div className="flex flex-wrap">
@@ -113,6 +125,7 @@ const Canvas = ({
   );
 };
 
+
 export default function Home() {
   const [blocks, setBlocks] = useState<Block[]>([]);
   const [history, setHistory] = useState<Block[][]>([[]]);
@@ -126,9 +139,9 @@ export default function Home() {
   const blocksRef = useRef<Block[]>([]);
 
   const handleDropBlock = (block: Block) => {
-    const currentBlocks = blocksRef.current.map((b) => b.id);
+    const currentIds = blocksRef.current.map((b) => b.id);
 
-    if (block.id === "blockB" && !currentBlocks.includes("blockA")) {
+    if (block.id === "blockB" && !currentIds.includes("blockA")) {
       alert("Block B requires Block A first!");
       return;
     }
@@ -145,18 +158,18 @@ export default function Home() {
   const handleUndo = () => {
     if (currentIndex > 0) {
       const newIndex = currentIndex - 1;
-      setCurrentIndex(newIndex);
       setBlocks(history[newIndex]);
       blocksRef.current = history[newIndex];
+      setCurrentIndex(newIndex);
     }
   };
 
   const handleRedo = () => {
     if (currentIndex < history.length - 1) {
       const newIndex = currentIndex + 1;
-      setCurrentIndex(newIndex);
       setBlocks(history[newIndex]);
       blocksRef.current = history[newIndex];
+      setCurrentIndex(newIndex);
     }
   };
 
