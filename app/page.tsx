@@ -1,103 +1,237 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import React, {
+  useState,
+  useRef,
+  useEffect,
+  type RefObject,
+  type FC,
+} from "react";
+import { DndProvider, useDrag, useDrop } from "react-dnd";
+import { HTML5Backend } from "react-dnd-html5-backend";
+
+// ---------- Types ----------
+interface Block {
+  id: string;
+  label: string;
+}
+
+interface DraggableBlockProps {
+  block: Block;
+}
+
+interface CanvasBlockProps {
+  block: Block;
+  onContextMenu: (x: number, y: number, block: Block) => void;
+}
+
+interface ContextMenuProps {
+  visible: boolean;
+  x: number;
+  y: number;
+}
+
+interface CanvasProps {
+  onDropBlock: (block: Block) => void;
+  blocks: Block[];
+  onContextMenu: (x: number, y: number, block: Block) => void;
+}
+
+// ---------- Block Options ----------
+const BLOCKS: Block[] = [
+  { id: "blockA", label: "Block A" },
+  { id: "blockB", label: "Block B" },
+];
+
+// ---------- Draggable Toolbox Block ----------
+const DraggableBlock: FC<DraggableBlockProps> = ({ block }) => {
+  const [{ isDragging }, drag] = useDrag(() => ({
+    type: "block",
+    item: { ...block },
+    collect: (monitor) => ({
+      isDragging: !!monitor.isDragging(),
+    }),
+  }));
+
+  const divRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (divRef.current) {
+      drag(divRef);
+    }
+  }, [drag]);
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+    <div
+      ref={divRef}
+      className={`p-2 m-2 bg-blue-200 rounded cursor-move ${
+        isDragging ? "opacity-50" : ""
+      }`}
+    >
+      {block.label}
     </div>
+  );
+};
+
+// ---------- Canvas Block ----------
+const CanvasBlock: FC<CanvasBlockProps> = ({ block, onContextMenu }) => (
+  <div
+    onContextMenu={(e) => {
+      e.preventDefault();
+      onContextMenu(e.clientX, e.clientY, block);
+    }}
+    className="p-2 m-2 bg-green-300 rounded cursor-pointer"
+  >
+    {block.label}
+  </div>
+);
+
+// ---------- Context Menu ----------
+const ContextMenu: FC<ContextMenuProps> = ({ visible, x, y }) => {
+  if (!visible) return null;
+  return (
+    <div
+      className="absolute bg-white border shadow px-2 py-1 z-10"
+      style={{ top: y, left: x }}
+    >
+      Hello World
+    </div>
+  );
+};
+
+// ---------- Canvas Area ----------
+const Canvas: FC<CanvasProps> = ({ onDropBlock, blocks, onContextMenu }) => {
+  const [, drop] = useDrop(() => ({
+    accept: "block",
+    drop: (item: Block) => onDropBlock(item),
+  }));
+
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (containerRef.current) {
+      drop(containerRef);
+    }
+  }, [drop]);
+
+  return (
+    <div
+      ref={containerRef}
+      className="flex-1 min-h-[400px] border border-dashed border-gray-500 p-4 relative bg-white rounded"
+
+    >
+      <div className="flex flex-wrap">
+        {blocks.map((block, index) => (
+          <CanvasBlock
+            key={index}
+            block={block}
+            onContextMenu={onContextMenu}
+          />
+        ))}
+      </div>
+    </div>
+  );
+};
+
+
+// ---------- Main Page ----------
+export default function Home() {
+  const blocksRef = useRef<Block[]>([]);
+  const [blocks, setBlocks] = useState<Block[]>([]);
+  const [history, setHistory] = useState<Block[][]>([[]]);
+  const [currentIndex, setCurrentIndex] = useState<number>(0);
+  const [context, setContext] = useState<{
+    visible: boolean;
+    x: number;
+    y: number;
+  }>({ visible: false, x: 0, y: 0 });
+
+  const handleDropBlock = (block: Block) => {
+    const ids = blocksRef.current.map((b) => b.id);
+
+    if (block.id === "blockB" && !ids.includes("blockA")) {
+      alert("Block B requires Block A first!");
+      return;
+    }
+
+    const newBlocks = [...blocksRef.current, block];
+    blocksRef.current = newBlocks;
+    setBlocks(newBlocks);
+
+    const newHistory = [...history.slice(0, currentIndex + 1), newBlocks];
+    setHistory(newHistory);
+    setCurrentIndex(newHistory.length - 1);
+  };
+
+  const handleUndo = () => {
+    if (currentIndex > 0) {
+      const newIndex = currentIndex - 1;
+      setCurrentIndex(newIndex);
+      setBlocks(history[newIndex]);
+      blocksRef.current = history[newIndex];
+    }
+  };
+
+  const handleRedo = () => {
+    if (currentIndex < history.length - 1) {
+      const newIndex = currentIndex + 1;
+      setCurrentIndex(newIndex);
+      setBlocks(history[newIndex]);
+      blocksRef.current = history[newIndex];
+    }
+  };
+
+  const handleContextMenu = (x: number, y: number, block: Block) => {
+    setContext({ visible: true, x, y });
+  };
+
+  const closeContext = () => {
+    setContext((prev) => ({ ...prev, visible: false }));
+  };
+
+  return (
+    <DndProvider backend={HTML5Backend}>
+      <div
+  onClick={closeContext}
+  className="flex flex-col h-screen p-4 gap-2"
+  style={{ backgroundColor: "#0f1042" }}
+>
+
+        {/* Undo/Redo Buttons */}
+        <div className="flex gap-2 mb-2">
+  <button
+    onClick={handleUndo}
+    className="bg-white text-black px-3 py-1 rounded disabled:opacity-50"
+    disabled={currentIndex === 0}
+  >
+    Undo
+  </button>
+  <button
+    onClick={handleRedo}
+    className="bg-white text-black px-3 py-1 rounded disabled:opacity-50"
+    disabled={currentIndex === history.length - 1}
+  >
+    Redo
+  </button>
+</div>
+
+
+        {/* Main Content */}
+        <div className="flex flex-1 gap-4">
+          <Canvas
+            onDropBlock={handleDropBlock}
+            blocks={blocks}
+            onContextMenu={handleContextMenu}
+          />
+          <div className="w-48 bg-gray-100 p-4 rounded">
+            <h2 className="font-bold mb-2">Toolbox</h2>
+            {BLOCKS.map((block) => (
+              <DraggableBlock key={block.id} block={block} />
+            ))}
+          </div>
+          <ContextMenu {...context} />
+        </div>
+      </div>
+    </DndProvider>
   );
 }
