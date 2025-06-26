@@ -54,7 +54,7 @@ const CanvasBlock = ({ block, moveBlock, registerRef, toggleMessage }: { block: 
 
   const [, drop] = useDrop({
     accept: "canvasBlock",
-    hover: (item: any, monitor) => {
+    hover: (item: { id: string }, monitor) => {
       if (!ref.current) return;
       const delta = monitor.getDifferenceFromInitialOffset();
       if (!delta) return;
@@ -62,7 +62,7 @@ const CanvasBlock = ({ block, moveBlock, registerRef, toggleMessage }: { block: 
       const newY = position.current.y + delta.y;
       moveBlock(item.id, newX, newY);
     },
-    drop: (item: any, monitor) => {
+    drop: (item: { id: string }, monitor) => {
       const delta = monitor.getDifferenceFromInitialOffset();
       if (!delta) return;
       position.current = {
