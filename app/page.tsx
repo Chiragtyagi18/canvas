@@ -46,7 +46,7 @@ const CanvasBlock = ({ block, moveBlock, registerRef, toggleMessage }: { block: 
     if (ref.current) registerRef(block.id, ref.current);
   }, [block.id, registerRef]);
 
-  const [{ isDragging }, drag] = useDrag(() => ({
+  const [,drag] = useDrag(() => ({
     type: "canvasBlock",
     item: { id: block.id },
     collect: (monitor) => ({ isDragging: !!monitor.isDragging() }),
